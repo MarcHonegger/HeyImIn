@@ -107,25 +107,44 @@ Sie können den betroffenen Event unter {_baseWebUrl}ViewEvent/{@event.Id}{authT
 
 			string reminderSubject = $"Reminder Event '{appointment.Event.Title}' zum Termin am {startTime:g}";
 
-			List<AppointmentParticipation> participationsAwaitingReminder = FilterParticipations(appointment.AppointmentParticipations, p => !p.SentReminder, e => e.SendReminderEmail);
+			List<AppointmentParticipation> participationsAwaitingReminder = FilterAndAppendAllParticipations(appointment, p => !p.SentReminder, e => e.SendReminderEmail);
 
-			foreach (AppointmentParticipation participation in participationsAwaitingReminder)
+			foreach (AppointmentParticipation appointmentParticipation in participationsAwaitingReminder)
 			{
-				string authTokenSuffix = await CreateAuthTokenSuffixAsync(participation.Participant.Id);
+				string state;
+				switch (appointmentParticipation.AppointmentParticipationAnswer)
+				{
+					case AppointmentParticipationAnswer.Accepted:
+						state = "zugesagt";
+						break;
+					case AppointmentParticipationAnswer.Declined:
+						state = "abgesagt";
+						break;
+					case null:
+						state = "noch keine Antwort gegeben";
+						break;
+					default:
+						throw new ArgumentOutOfRangeException();
+				}
+				string message = await ComposeMessageAsync(appointmentParticipation.Participant, state);
 
-				string message = $@"Hallo {participation.Participant.FullName}
+				await _mailSender.SendMailAsync(appointmentParticipation.Participant.Email, reminderSubject, message);
 
-Sie haben dem Termin am {startTime:g} zum Event '{appointment.Event.Title}' zugesagt.
-
-Sie können weitere Details zum Event unter {_baseWebUrl}ViewEvent/{appointment.Event.Id}{authTokenSuffix} ansehen.";
-
-
-				await _mailSender.SendMailAsync(participation.Participant.Email, reminderSubject, message);
-
-				participation.SentReminder = true;
+				appointmentParticipation.SentReminder = true;
 			}
 
 			_log.InfoFormat("{0}(): Sent {1} reminders for appointment {2}", nameof(SendAndUpdateRemindersAsync), participationsAwaitingReminder.Count, appointment.Id);
+
+			async Task<string> ComposeMessageAsync(User participant, string state)
+			{
+				string authTokenSuffix = await CreateAuthTokenSuffixAsync(participant.Id);
+
+				return $@"Hallo {participant.FullName}
+
+Sie haben für den Termin am {startTime:g} zum Event '{appointment.Event.Title}' {state}.
+
+Sie können weitere Details zum Event unter {_baseWebUrl}ViewEvent/{appointment.Event.Id}{authTokenSuffix} ansehen.";
+			}
 		}
 
 		public async Task SendAndUpdateSummariesAsync(Appointment appointment)
@@ -142,7 +161,7 @@ Die finale Teilnehmerliste:
 
 {participants}";
 
-			List<AppointmentParticipation> participationsAwaitingSummary = FilterParticipations(appointment.AppointmentParticipations, p => !p.SentSummary, e => e.SendSummaryEmail);
+			List<AppointmentParticipation> participationsAwaitingSummary = FilterAcceptedParticipations(appointment.AppointmentParticipations, p => !p.SentSummary, e => e.SendSummaryEmail);
 
 			foreach (AppointmentParticipation participation in participationsAwaitingSummary)
 			{
@@ -202,7 +221,7 @@ Sie können weitere Details zum Event unter {_baseWebUrl}ViewEvent/{@event.Id}{a
 
 {participants}";
 
-			List<AppointmentParticipation> participationsAlreadyGotSummary = FilterParticipations(appointment.AppointmentParticipations, p => p.SentSummary, e => e.SendLastMinuteChangesEmail);
+			List<AppointmentParticipation> participationsAlreadyGotSummary = FilterAcceptedParticipations(appointment.AppointmentParticipations, p => p.SentSummary, e => e.SendLastMinuteChangesEmail);
 
 			foreach (AppointmentParticipation participation in participationsAlreadyGotSummary)
 			{
@@ -276,12 +295,44 @@ Sie können weitere Details zum Event unter {_baseWebUrl}ViewEvent/{@event.Id}{a
 		/// <summary>
 		///     Returns all participations which pass the provided filters and were accepted
 		/// </summary>
-		private static List<AppointmentParticipation> FilterParticipations(IEnumerable<AppointmentParticipation> participations,
-																	Func<AppointmentParticipation, bool> participationFilter,
-																	Func<EventParticipation, bool> eventFilter)
+		private static List<AppointmentParticipation> FilterAcceptedParticipations(IEnumerable<AppointmentParticipation> participations,
+																		   Func<AppointmentParticipation, bool> participationFilter,
+																		   Func<EventParticipation, bool> eventFilter)
 		{
 			return participations
 				.Where(p => p.AppointmentParticipationAnswer == AppointmentParticipationAnswer.Accepted)
+				.Where(participationFilter)
+				.Where(p => eventFilter(p.Appointment.Event.EventParticipations.First(e => e.Participant == p.Participant)))
+				.ToList();
+		}
+
+		/// <summary>
+		///     Returns all participations which pass the provided filters
+		///     If no answer exists, Automatically adds appointment participations with the answer null
+		/// </summary>
+		private static List<AppointmentParticipation> FilterAndAppendAllParticipations(Appointment appointment,
+																		   Func<AppointmentParticipation, bool> participationFilter,
+																		   Func<EventParticipation, bool> eventFilter)
+		{
+			// First create the appointment participations for users which have no participation yet
+			// A appointment participation is required to track the sent emails
+			List<int> participantIds = appointment.AppointmentParticipations.Select(p => p.ParticipantId).ToList();
+
+			foreach (EventParticipation eventParticipationWithoutAppointmentParticipation in appointment.Event.EventParticipations.Where(e => !participantIds.Contains(e.ParticipantId)))
+			{
+				var newAppointmentParticipation = new AppointmentParticipation
+				{
+					Appointment = appointment,
+					Participant = eventParticipationWithoutAppointmentParticipation.Participant,
+					AppointmentParticipationAnswer = null,
+					SentReminder = false,
+					SentSummary = false
+				};
+
+				appointment.AppointmentParticipations.Add(newAppointmentParticipation);
+			}
+
+			return appointment.AppointmentParticipations
 				.Where(participationFilter)
 				.Where(p => eventFilter(p.Appointment.Event.EventParticipations.First(e => e.Participant == p.Participant)))
 				.ToList();
