@@ -1,0 +1,87 @@
+{
+  "configVersion": 1,
+  "index": "/index.html",
+  "assetGroups": [
+    {
+      "name": "app",
+      "installMode": "prefetch",
+      "updateMode": "prefetch",
+      "urls": [
+        "/favicon.ico",
+        "/index.html",
+        "/main.5b3773db0027ea4fcb58.js",
+        "/polyfills.a7e86b6ad3626ba2dd77.js",
+        "/runtime.a66f828dca56eeb90e02.js",
+        "/styles.db2260f0edcc28b0a4e7.css"
+      ],
+      "patterns": []
+    },
+    {
+      "name": "assets",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "urls": [
+        "/assets/icons/icon-128x128.png",
+        "/assets/icons/icon-144x144.png",
+        "/assets/icons/icon-152x152.png",
+        "/assets/icons/icon-192x192.png",
+        "/assets/icons/icon-384x384.png",
+        "/assets/icons/icon-512x512.png",
+        "/assets/icons/icon-72x72.png",
+        "/assets/icons/icon-96x96.png",
+        "/assets/icons/icon.svg",
+        "/assets/img/GitHub-mark.png",
+        "/assets/img/atos-logo.png"
+      ],
+      "patterns": []
+    },
+    {
+      "name": "fonts",
+      "installMode": "prefetch",
+      "updateMode": "prefetch",
+      "urls": [],
+      "patterns": [
+        "https:\\/\\/fonts\\.googleapis\\.com\\/.*",
+        "https:\\/\\/fonts\\.gstatic\\.com\\/.*"
+      ]
+    }
+  ],
+  "dataGroups": [],
+  "hashTable": {
+    "/assets/icons/icon-128x128.png": "db5ee96d3f35bc77248371b248f5306fe3425438",
+    "/assets/icons/icon-144x144.png": "2fa858283a732e5ed066bb160e1152240b23362a",
+    "/assets/icons/icon-152x152.png": "ac877ac24f4b256e3e4d032a165668deeb4ef796",
+    "/assets/icons/icon-192x192.png": "57ad8105cc9b825257bebb748c8ff8e4eda514f2",
+    "/assets/icons/icon-384x384.png": "ee69d1fa2741d51c227326c164b1f6fb737a89ce",
+    "/assets/icons/icon-512x512.png": "8ce53ad564b8fc929970be35296fe6a7147c60ab",
+    "/assets/icons/icon-72x72.png": "53d90b411d777f25d223fb01808846b46e9705e1",
+    "/assets/icons/icon-96x96.png": "f0248ae8c3a8b11f4c07e70c211429a200952fde",
+    "/assets/icons/icon.svg": "8c8ebdb8ffaa466dd6d14bda20f9abdc325dfd14",
+    "/assets/img/GitHub-mark.png": "8e4af8e0da1da6fb685e86c19afb5322d559a8ca",
+    "/assets/img/atos-logo.png": "ecdc8da2a9376296720e84a5fe4e38db31877c75",
+    "/favicon.ico": "c9155291ef966f589d52f754562f5c7362144d67",
+    "/index.html": "abcbf19bc804b116fdd9cdfbcfba325e96147e26",
+    "/main.5b3773db0027ea4fcb58.js": "d4c9429525b359c55fe3f7b2650aaa8718d07d0c",
+    "/polyfills.a7e86b6ad3626ba2dd77.js": "d188ecdbaa4b03cbf62b46bc60f8770eea88bc14",
+    "/runtime.a66f828dca56eeb90e02.js": "078e320cc6fdaf355836c3b1c52b059cdd33fc7e",
+    "/styles.db2260f0edcc28b0a4e7.css": "50eef0a70417478172e37ab8967ddeb09d9cfb35"
+  },
+  "navigationUrls": [
+    {
+      "positive": true,
+      "regex": "^\\/.*$"
+    },
+    {
+      "positive": false,
+      "regex": "^\\/(?:.+\\/)?[^\\/]*\\.[^\\/]*$"
+    },
+    {
+      "positive": false,
+      "regex": "^\\/(?:.+\\/)?[^\\/]*__[^\\/]*$"
+    },
+    {
+      "positive": false,
+      "regex": "^\\/(?:.+\\/)?[^\\/]*__[^\\/]*\\/.*$"
+    }
+  ]
+}
